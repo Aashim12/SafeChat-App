@@ -3,8 +3,10 @@ package com.example.safechat.messages
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Base64
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.safechat.NewMessageActivity
 import com.example.safechat.NewMessageActivity.Companion.USER_KEY
@@ -25,6 +27,9 @@ import com.xwray.groupie.GroupieViewHolder
 import com.xwray.groupie.Item
 import kotlinx.android.synthetic.main.activity_login.toolbar
 import kotlinx.android.synthetic.main.latest_message_row.view.*
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class LatestMessagesActivity : AppCompatActivity() {
     private lateinit var mAuth: FirebaseAuth
@@ -76,11 +81,11 @@ class LatestMessagesActivity : AppCompatActivity() {
     private fun listenLatestMessage(){
         val fromId=mAuth.uid
         val ref=database.getReference("/latest-messages/$fromId")
-
-        ref.addChildEventListener(object :ChildEventListener{
+    ref.addChildEventListener(object :ChildEventListener{
             // we can add notification here for newmessage from new user
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                  val chatmessage=snapshot.getValue(ChatMessage::class.java) ?:return
+
                 latestmessageMap[snapshot.key!!]=chatmessage
                 refreshRecylerview()
 
@@ -113,7 +118,7 @@ class LatestMessagesActivity : AppCompatActivity() {
         ref.addListenerForSingleValueEvent(object: ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 currentuser=snapshot.getValue(User::class.java)
-
+                binding.latestMessageProgressbar.visibility=View.GONE
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -130,7 +135,6 @@ class LatestMessagesActivity : AppCompatActivity() {
             startActivity(intent)
         }
     }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item?.itemId){
             R.id.new_message_menu ->{

@@ -4,9 +4,12 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import com.example.safechat.databinding.ActivityNewMessageBinding
 import com.example.safechat.messages.ChatLogActivity
 import com.example.safechat.models.User
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 
 
 import com.google.firebase.database.DataSnapshot
@@ -23,7 +26,7 @@ import kotlinx.android.synthetic.main.activity_new_message.*
 import kotlinx.android.synthetic.main.user_row_newmessage.view.*
 
 class NewMessageActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityNewMessageBinding
+   private lateinit var binding: ActivityNewMessageBinding
     private lateinit var database: FirebaseDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         database=Firebase.database
@@ -58,9 +61,10 @@ companion object{
                     Log.d("New Message",it.toString())
                     val user=it.getValue(User::class.java)
 
-                  if(user!=null )
-                    adapter.add(UserItem(user))
-
+                  if(user!=null ) {
+                      adapter.add(UserItem(user))
+                      binding.newMessageProgressbar.visibility=View.GONE
+                  }
                 }
                 adapter.setOnItemClickListener { item, view ->
                   //item is casted as object of Useritem class
@@ -83,11 +87,22 @@ companion object{
     }
 }
 class UserItem(val user: User):Item<GroupieViewHolder>(){
+    private lateinit var mAuth: FirebaseAuth
+
     override fun bind(viewHolder: GroupieViewHolder, position: Int) {
-        viewHolder.itemView.username_new_message.text = user.username
+        mAuth=Firebase.auth
 
+         val cuser=mAuth.currentUser!!.uid
+        if(user.uid==cuser) {
+            viewHolder.itemView.visibility = View.GONE
+            Log.d("Removed","Current User is removed")
+        }
+        else {
+
+            viewHolder.itemView.username_new_message.text = user.username
             Picasso.get().load(user.profileimageurl).into(viewHolder.itemView.userimage)
-
+            Log.d("Added","User is added")
+        }
     }
     override fun getLayout(): Int {
            return R.layout.user_row_newmessage
